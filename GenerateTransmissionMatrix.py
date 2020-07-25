@@ -207,7 +207,8 @@ def initialize(_file_):
 
 
 #**********************MAIN**************************
-dir_ = 'C:\\Users\\devon\\Documents\\DRRSMask\\Working_Version\\MLEM\\'
+#dir_ = 'C:\\Users\\devon\\Documents\\DRRSMask\\Working_Version\\MLEM\\'
+dir_ = os.path.dirname(os.path.abspath(CONFIG_NAME)) + "\\"
 file_ = CONFIG_NAME + '.txt'
 outFile_ = CONFIG_NAME + '_out.txt'
 file_name_ = dir_ + file_
