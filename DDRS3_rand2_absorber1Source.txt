@@ -3463,10 +3463,10 @@ SP1 0 0.99 0.01
 SB1 0. 0. 1.
 c
 c ================= TALLIES ==================
-FMESH104:p geom=xyz origin -100 -0.5 -100
-                       imesh  100          iints 200
-                       jmesh      0.5     jints   1
-                       kmesh           100 kints 200 
+c FMESH104:p geom=xyz origin -100 -0.5 -100
+c                       imesh  100          iints 200
+c                       jmesh      0.5     jints   1
+c                       kmesh           100 kints 200 
 f4:p 7777
 e4 0.01 12i 1
 fc4 *Gamma Flux In Detector*
