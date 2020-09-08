@@ -24,7 +24,7 @@ from tqdm import *
 ########### GLOBALS #############
 
 #Configuration Name (this is name of input file without .txt)
-CONFIG_NAME = 'DDRS3_rand2_absorber'
+CONFIG_NAME = 'DDRS3_rand2_absorber500keV'
 
 #################################
 
@@ -98,7 +98,7 @@ def createFiles(file_name, z_pos, r, init, final, step_size):
 		theta_rad = np.arctan(z_pos/r)
 		#vecz_pos = round(-1 * (theta_rad/(np.pi/2)),5)
 		#replacement_text = sdef + " ERG = 1.42 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " VEC= " + str(vecx_pos) + " " + str(vecy_pos) + " " + str(vecz_pos) + " DIR=d1 par=n" + "\n"
-		replacement_text = sdef + " ERG = 0.6617 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " VEC= " + str(vecx_pos) + " " + str(vecy_pos) + " " + str(vecz_pos) + " DIR=d1 WGT 20 par=p" + "\n"
+		replacement_text = sdef + " ERG = 0.50 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " VEC= " + str(vecx_pos) + " " + str(vecy_pos) + " " + str(vecz_pos) + " DIR=d1 WGT 20 par=p" + "\n"
 		#replacement_text = sdef + " ERG = 1.42 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " par=n" + "\n"
 		read_name = file_name
 		write_name = CONFIG_NAME + "_" + str(new_ang) + ".txt"
@@ -124,10 +124,10 @@ def createFiles(file_name, z_pos, r, init, final, step_size):
 															remove_all: test to determine whether to delete all files or only runtpe files
 '''
 
-def removeFiles(directory, file1, file2, file3, outfile, initfile, t_file, save_one, remove_all):
+def removeFiles(directory, file1, file2, file3, outfile, initfile, t_file, temp_tfile, save_one, remove_all):
 	dir_name = directory
 	for fname in os.listdir(dir_name):
-		if (fname != initfile and fname != t_file):
+		if (fname != initfile and fname != t_file and fname != temp_tfile):
 			if fname.startswith("binRun"):
 				os.remove(os.path.join(dir_name, fname))
 			if (fname.startswith(file1[:-4]) or fname.startswith(outfile[:-4])) and remove_all:
@@ -217,6 +217,11 @@ keepInFile = dir_ + CONFIG_NAME + '_0.txt'
 keepOutFile = dir_ + CONFIG_NAME + '_out0.txt'
 init_file= dir_ + 'init.txt'
 t_file = CONFIG_NAME + "tMatrix.csv"
+temp_tfile = "temp_" + t_file
+
+if (not os.path.exists(dir_+t_file)):
+	with open(dir_+t_file, 'w') as newFile:
+		pass
 
 intensity, activity, nps, t = 0,0,0,0
 rho_,init_ang,final_ang,step = 0,0,0,0
@@ -236,7 +241,7 @@ deltaZList = []
 z = initialZ
 while (z <= zMax):
 	start = time.time()
-	removeFiles(dir_, file_, keepInFile, keepOutFile, outFile_, init_file, t_file, False, True) # purge directory of any existing MCNP files from previous run
+	removeFiles(dir_, file_, keepInFile, keepOutFile, outFile_, init_file, t_file, temp_tfile, False, True) # purge directory of any existing MCNP files from previous run
 	files = createFiles(file_name_, z, rho_, init_ang, final_ang, step) # create all MCNP input files
 
 	commands = []
@@ -260,7 +265,7 @@ while (z <= zMax):
 		else:
 			commandsub = commands[x:]
 		processes = [subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, cwd=dir_) for cmd in commandsub]
-		removeFiles(dir_, file_, keepInFile, keepOutFile, outFile_, init_file, t_file, False, False) # remove runtpe files
+		removeFiles(dir_, file_, keepInFile, keepOutFile, outFile_, init_file, t_file, temp_tfile, False, False) # remove runtpe files
 
 		for p in processes:
 			p.wait()
@@ -287,7 +292,7 @@ while (z <= zMax):
 		sourceAngleList.append(rad_ang)
 		ang += step
 
-	removeFiles(dir_, file_, keepInFile, keepOutFile, outFile_, init_file, t_file, True, False)
+	removeFiles(dir_, file_, keepInFile, keepOutFile, outFile_, init_file, t_file, temp_tfile, True, False)
 	end = time.time()
 	print("Runtime: ", round((end - start)/60, 2), " mins")
 	
@@ -333,11 +338,43 @@ while (z <= zMax):
 	z += zStep
 
 	transmissionMatrix.append(list(normalizedCountsArray))
-	with open(dir_+t_file,"w", newline='') as file:
+	'''
+	with open(dir_+t_file,"a", newline='') as file:
 		print ("The t matrix has been written!")
 		print ("TFILE: ", t_file)
 		writer=csv.writer(file,delimiter=',')
-		writer.writerows(zip(*transmissionMatrix))
+		#writer.writerows(zip(*transmissionMatrix))
+		for index in normalizedCountsArray:
+			writer.writerow([index])
+		#writer.writerows(zip(*transmissionMatrix))
+	'''
+	existingTransmissionMatrix = False
+
+	with open(dir_+t_file,"r") as file_input:
+		reader=csv.reader(file_input)
+		for row in reader:
+			if (not row[0]):
+				break
+			else:
+				existingTransmissionMatrix = True
+				break
+		file_input.seek(0)
+		with open(dir_+temp_tfile,"w") as file_output:
+			writer=csv.writer(file_output,lineterminator='\n')
+			if (existingTransmissionMatrix):
+				appendIndex = 0
+				for row in reader:
+					row.append(normalizedCountsArray[appendIndex])
+					writer.writerow(row)
+					appendIndex += 1
+			elif (existingTransmissionMatrix == False):
+				for index in normalizedCountsArray:
+					writer.writerow([index])
+	os.remove(t_file)
+	os.rename(temp_tfile, t_file)
+
+
+
 
 print("Delta Z List: ", deltaZList)
 deltaZScore = 0
