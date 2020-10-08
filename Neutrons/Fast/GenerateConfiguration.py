@@ -19,8 +19,6 @@ Imp_str = "  Imp:p,n=1 \n"
 #configuration = 'Checkerboard'
 configuration = 'Random'
 
-poly_prob = 0.35
-
 if (configuration == 'Checkerboard'):
     flip=False
     for cell in range(240):
@@ -68,28 +66,28 @@ if (configuration == 'Checkerboard'):
 elif (configuration == 'Random'):
     for cell in range(240):
         randnum = rd.uniform(0,1)
-        if (randnum >= poly_prob):
+        if (randnum >= 0.5) == 0:
             cellcard = str(cell+1)+lead_str+str(-cell-1) + "\n"  #+Imp_str
         else:
             cellcard = str(cell+1)+poly_str+str(-cell-1) + "\n"  #+Imp_str
         f_cc.write(cellcard)
     for cell in range(1000,1345):
         randnum = rd.uniform(0,1)
-        if (randnum >= poly_prob):
+        if (randnum >= 0.5) == 0:
             cellcard = str(cell+1)+lead_str+str(-cell-1) + "\n"  #+Imp_str
         else:
             cellcard = str(cell+1)+poly_str+str(-cell-1) + "\n"  #+Imp_str
         f_cc.write(cellcard)    
     for cell in range(2000,2465):
         randnum = rd.uniform(0,1)
-        if (randnum >= poly_prob):
+        if (randnum >= 0.5) == 0:
             cellcard = str(cell+1)+lead_str+str(-cell-1) + "\n"  #+Imp_str
         else:
             cellcard = str(cell+1)+poly_str+str(-cell-1) + "\n"  #+Imp_str
         f_cc.write(cellcard)  
     for cell in range(3000,3570):
         randnum = rd.uniform(0,1)
-        if (randnum >= poly_prob):
+        if (randnum >= 0.5) == 0:
             cellcard = str(cell+1)+lead_str+str(-cell-1) + "\n"  #+Imp_str
         else:
             cellcard = str(cell+1)+poly_str+str(-cell-1) + "\n"  #+Imp_str

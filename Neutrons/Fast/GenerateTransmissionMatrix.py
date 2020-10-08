@@ -89,12 +89,12 @@ def createFiles(file_name, z_pos, r, init, final, step_size):
 		
 		rad_ang = math.radians(new_ang)
 
-		x_pos = round(r * np.cos(rad_ang),2)
-		y_pos = round(r * np.sin(rad_ang),2)
+		x_pos = round(r * np.cos(rad_ang),1)
+		y_pos = round(r * np.sin(rad_ang),1)
 		r_mag = np.sqrt(x_pos**2+y_pos**2+z_pos**2)
-		vecx_pos = round(-x_pos/r_mag,2)
-		vecy_pos = round(-y_pos/r_mag,2)
-		vecz_pos = round(-z_pos/r_mag,2)
+		vecx_pos = round(-x_pos/r_mag,1)
+		vecy_pos = round(-y_pos/r_mag,1)
+		vecz_pos = round(-z_pos/r_mag,1)
 		theta_rad = np.arctan(z_pos/r)
 		#vecz_pos = round(-1 * (theta_rad/(np.pi/2)),5)
 		#replacement_text = sdef + " ERG = 1.42 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " VEC= " + str(vecx_pos) + " " + str(vecy_pos) + " " + str(vecz_pos) + " DIR=d1 par=n" + "\n"
