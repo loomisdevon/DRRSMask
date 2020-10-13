@@ -25,12 +25,12 @@ from tqdm import *
 
 #Configuration Name (this is name of input file without .txt)
 CONFIG_NAME = 'DDRS3_rand2_absorber1Source'
-SOURCE_NAME = 'source1'
+SOURCE_NAME = 'source5'
 tMATRIXCONFIG_NAME = 'DDRS3_rand2_absorber'
 tMatrixFilename = tMATRIXCONFIG_NAME + "tMatrix.csv"
 #####################
 # Source Info
-R = 100
+R = 10000
 Phi = 80
 Theta = 60
 ##############
@@ -109,7 +109,7 @@ def createFiles(file_name, phi, rad, init, final, step_size):
 		#theta_rad = np.arctan(z_pos/r)
 		#vecz_pos = round(-1 * (theta_rad/(np.pi/2)),5)
 		#replacement_text = sdef + " ERG = 1.42 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " VEC= " + str(vecx_pos) + " " + str(vecy_pos) + " " + str(vecz_pos) + " DIR=d1 par=n" + "\n"
-		replacement_text = sdef + " ERG = 2.0 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " VEC= " + str(vecx_pos) + " " + str(vecy_pos) + " " + str(vecz_pos) + " DIR=d1 WGT 20 par=n" + "\n"
+		replacement_text = sdef + " ERG = 0.662 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " VEC= " + str(vecx_pos) + " " + str(vecy_pos) + " " + str(vecz_pos) + " DIR=d1 WGT 20 par=p" + "\n"
 		#replacement_text = sdef + " ERG = 1.42 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " par=n" + "\n"
 		read_name = file_name
 		write_name = CONFIG_NAME + SOURCE_NAME + "_" + str(new_theta) + ".txt"
@@ -187,7 +187,7 @@ def readFlux(_file_,energyBin):
 
 	with open(_file_, 'r') as outfile:
 		for line in outfile:
-			if ('+                                   *Neutron Flux In Detector*' in line):
+			if ('+                                   *Gamma Flux In Detector*' in line):
 
 				lines = [outfile.readline() for i in range(9)] #this reads 9 lines after the fc4 comment
 				spectrum = [outfile.readline() for i in range(energyBin+1)] #this reads 13 lines which contain spectrum

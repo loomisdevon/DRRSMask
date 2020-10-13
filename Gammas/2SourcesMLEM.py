@@ -24,16 +24,19 @@ from tqdm import *
 ########### GLOBALS #############
 
 #Configuration Name (this is name of input file without .txt)
-CONFIG_NAME = 'DDRS3_rand2_absorber1Source'
-SOURCE_NAME = 'source1'
+CONFIG_NAME = 'DDRS3_rand2_absorber2Sources'
+SOURCE_NAME = 'source11'
 tMATRIXCONFIG_NAME = 'DDRS3_rand2_absorber'
 tMatrixFilename = tMATRIXCONFIG_NAME + "tMatrix.csv"
-#####################
-# Source Info
-R = 100
-Phi = 80
-Theta = 60
-##############
+################################
+#Source 1 Info
+z1 = 60
+Theta1 = 40
+###########
+#Source 2 Info
+z2 = -20
+Theta2 = 270
+###########
 #################################
 
 ###################################### creating all MCNP input files for simulation of the increasing relative distance between source and detector #######################
@@ -80,51 +83,76 @@ def smoothing(fluxArray, smoothingParameter):
 	return smoothingArray
 
 
-def createFiles(file_name, phi, rad, init, final, step_size):
+def createFiles(file_name, z_pos1, z_pos2, r, init1, init2, final1, final2, step_size):
 	fileList = []
 	marker=0
-	rad_phi = math.radians(phi)
-	for new_theta in range(init, final, step_size):
+	ang_diff = init2 - init1
+	for new_ang in range(init1, final1, step_size):
 
 		text_search = None
 		f =open(file_name)
 		for line in f:
 			words = line
-			sdef = words[0:4]
-			if (sdef == "SDEF"):
-				text_search = words
-				break
+			#sdef = words[0:4]
+			startOfWord = words[0:5]
+			if (startOfWord == "si1 L"):
+				pos_info = words
+			#if (sdef == "SDEF"):
+				#text_search = words
+				#break
+			elif (startOfWord == "si3 L"):
+				vec1_info = words
+			elif (startOfWord == "si4 L"):
+				vec2_info = words
+
+
 		f.close()
 		
-		rad_theta = math.radians(new_theta)
+		rad_ang1 = math.radians(new_ang)
+		rad_ang2 = math.radians(new_ang+ang_diff)
 
-
-		x_pos = round(rad * np.cos(rad_theta)*np.sin(rad_phi),1)
-		y_pos = round(rad * np.sin(rad_theta)*np.sin(rad_phi),1)
-		z_pos = round(rad * np.cos(rad_phi),1)
-		r_mag = np.sqrt(x_pos**2+y_pos**2+z_pos**2)
-		vecx_pos = round(-x_pos/r_mag,1)
-		vecy_pos = round(-y_pos/r_mag,1)
-		vecz_pos = round(-z_pos/r_mag,1)
+		x_pos1 = round(r * np.cos(rad_ang1),1)
+		y_pos1 = round(r * np.sin(rad_ang1),1)
+		r_mag1 = np.sqrt(x_pos1**2+y_pos1**2+z_pos1**2)
+		vecx_pos1 = round(-x_pos1/r_mag1,1)
+		vecy_pos1 = round(-y_pos1/r_mag1,1)
+		vecz_pos1 = round(-z_pos1/r_mag1,1)
+		x_pos2 = round(r * np.cos(rad_ang2),1)
+		y_pos2 = round(r * np.sin(rad_ang2),1)
+		r_mag2 = np.sqrt(x_pos2**2+y_pos2**2+z_pos2**2)
+		vecx_pos2 = round(-x_pos2/r_mag2,1)
+		vecy_pos2 = round(-y_pos2/r_mag2,1)
+		vecz_pos2 = round(-z_pos2/r_mag2,1)
+		theta_rad = np.arctan(z_pos1/r)
+		#vecx_pos = round(-1 * np.cos(rad_ang),5)
+		#vecy_pos = round(-1 * np.sin(rad_ang),5)
 		#theta_rad = np.arctan(z_pos/r)
-		#vecz_pos = round(-1 * (theta_rad/(np.pi/2)),5)
+		#vecz_pos = round(-1 * (theta_rad/(np.pi/2)),5) 
+		replacement_pos = "si1 L " + str(x_pos1) + " " + str(y_pos1) + " " + str(z_pos1) + " " + str(x_pos2) + " " + str(y_pos2) + " " + str(z_pos2) + "\n"
+		replacement_vec1 = "si3 L " + str(vecx_pos1) + " " + str(vecy_pos1) + " " + str(vecz_pos1)  + "\n"
+		replacement_vec2 = "si4 L " + str(vecx_pos2) + " " + str(vecy_pos2) + " " + str(vecz_pos2)  + "\n"
 		#replacement_text = sdef + " ERG = 1.42 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " VEC= " + str(vecx_pos) + " " + str(vecy_pos) + " " + str(vecz_pos) + " DIR=d1 par=n" + "\n"
-		replacement_text = sdef + " ERG = 2.0 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " VEC= " + str(vecx_pos) + " " + str(vecy_pos) + " " + str(vecz_pos) + " DIR=d1 WGT 20 par=n" + "\n"
+		#replacement_text = sdef + " ERG = 0.6617 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " VEC= " + str(vecx_pos) + " " + str(vecy_pos) + " " + str(vecz_pos) + " DIR=d1 WGT 20 par=p" + "\n"
 		#replacement_text = sdef + " ERG = 1.42 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " par=n" + "\n"
+		
 		read_name = file_name
-		write_name = CONFIG_NAME + SOURCE_NAME + "_" + str(new_theta) + ".txt"
+		write_name = CONFIG_NAME + SOURCE_NAME + "_" + str(new_ang) + ".txt"
 
 		f1 = open(read_name, 'r')
 		f2 = open(write_name, 'w')
 
 		for lines in f1:
-			f2.write(lines.replace(text_search, replacement_text))
+			#f2.write(lines.replace(text_search, replacement_text))
+			f2.write(lines.replace(pos_info, replacement_pos).replace(vec1_info, replacement_vec1).replace(vec2_info, replacement_vec2))
+			#f2.write(lines.replace(vec1_info, replacement_vec1))
+			#f2.write(lines.replace(vec2_info, replacement_vec2))
 
 		f1.close()
 		f2.close()
 		fileList.append(write_name)
 
 	return (fileList)
+		
 
 
 ################################# delete runtpe files after every set of commands and delete all output files and input files after program run #######################
@@ -187,7 +215,7 @@ def readFlux(_file_,energyBin):
 
 	with open(_file_, 'r') as outfile:
 		for line in outfile:
-			if ('+                                   *Neutron Flux In Detector*' in line):
+			if ('+                                   *Gamma Flux In Detector*' in line):
 
 				lines = [outfile.readline() for i in range(9)] #this reads 9 lines after the fc4 comment
 				spectrum = [outfile.readline() for i in range(energyBin+1)] #this reads 13 lines which contain spectrum
@@ -215,8 +243,8 @@ def readFlux(_file_,energyBin):
 
 def initialize(_file_):
 	global intensity, activity, nps, t
-	global radius, init_theta, final_theta, step_theta
-	global init_phi, final_phi, step_phi
+	global rho_,init_ang,final_ang,step
+	global zMax,zMin,zStep,initialZFlag,initialZ
 	global packet
 
 
@@ -227,13 +255,16 @@ def initialize(_file_):
 		nps = float(file.readline()[6:])
 		t = float(file.readline()[4:])
 		file.readline()
-		radius = float(file.readline()[9:])
-		init_theta = int(file.readline()[13:])
-		final_theta = int(file.readline()[14:])
-		step_theta = int(file.readline()[13:])
-		init_phi = float(file.readline()[11:])
-		final_phi = float(file.readline()[12:])
-		step_phi = float(file.readline()[11:])
+		rho_ = float(file.readline()[7:])
+		init_ang = int(file.readline()[11:])
+		final_ang = int(file.readline()[12:])
+		step = int(file.readline()[7:])
+		zMax = float(file.readline()[7:])
+		zMin = float(file.readline()[7:])
+		zStep = float(file.readline()[8:])
+		file.readline()
+		initialZFlag = bool(file.readline()[15:])
+		initialZ = float(file.readline()[11:])
 		file.readline()
 		file.readline()
 		packet = int(file.readline()[9:])
@@ -253,47 +284,48 @@ t_file = CONFIG_NAME + "tMatrix.csv"
 
 
 intensity, activity, nps, t = 0,0,0,0
-radius,init_theta,final_theta,step_theta = 0,0,0,0
-init_phi,final_phi,step_phi = 0,0,0
+rho_,init_ang,final_ang,step = 0,0,0,0
+zMax,zMin,zStep,initialZFlag,initialZ = 0,0,0,0,0
 packet = 0
 
 
 initialize(init_file)
 
-originalThetaCountsArray = []
-originalThetaErrorArray = []
+originalZCountsArray = []
+originalZErrorArray = []
 
 
+init_ang1 = Theta1
+init_ang2 = Theta2
 
-init_theta = Theta
 
-
-final_theta = init_theta+360
+final_ang1 = init_ang1+360
+final_ang2 = init_ang2+360
 transmissionMatrix = []
 
 
 start = time.time()
 removeFiles(dir_, file_, keepInFile, keepOutFile, outFile_, init_file, t_file, False, True) # purge directory of any existing MCNP files from previous run
 #files = createFiles(file_name_, z, radius, init_ang, final_ang, step)
-files = createFiles(file_name_, Phi, R, init_theta, final_theta, step_theta) # create all MCNP input files
+files = createFiles(file_name_, z1, z2, rho_, init_ang1, init_ang2, final_ang1, final_ang2, step) # create all MCNP input files
 
 commands = []
 outFileList = []
-j = init_theta
+j = init_ang
 
 #create set of commands for subprocess of all input files
-for i in range(int((final_theta - init_theta) / step_theta)):
+for i in range(int((final_ang - init_ang) / step)):
 	binFile = "binRun" + str(j) + ".r"	
 	outFile = (CONFIG_NAME + SOURCE_NAME + "_out" + str(j) + ".txt")
 	commands.append("mcnp6 i=" + files[i] + " o=" +  outFile + " runtpe=" + binFile)
 	outFileList.append(outFile)
-	j += step_theta
+	j += step
 
 
 print("Simulating...")
 
 # give subprocess pak amount of parallel programs to execute until all commands are executed 
-for x in tqdm(range(0,int((final_theta - init_theta) / step_theta),(packet))):	
+for x in tqdm(range(0,int((final_ang - init_ang) / step),(packet))):	
 	if (x < (len(commands) - packet)):
 		commandsub = commands[x:(x+packet)]
 	else:
@@ -305,11 +337,11 @@ for x in tqdm(range(0,int((final_theta - init_theta) / step_theta),(packet))):
 		p.wait()
 
 print ("Checkpoint")
-theta = init_theta
+ang = init_ang
 
 fluxList = []
 errorList = []
-sourceThetaList = []
+sourceAngleList = []
 
 #use for neutrons
 #energyBinOfInterest = 13
@@ -322,9 +354,9 @@ for f in outFileList:
 	flux, error = readFlux(f, energyBinOfInterest)
 	fluxList.append(flux)
 	errorList.append(error)
-	rad_theta = math.radians(theta)
-	sourceThetaList.append(rad_theta)
-	theta += step_theta
+	rad_ang = math.radians(ang)
+	sourceAngleList.append(rad_ang)
+	ang += step
 
 removeFiles(dir_, file_, keepInFile, keepOutFile, outFile_, init_file, t_file, True, False)
 end = time.time()
@@ -339,7 +371,7 @@ fluxArray = np.array(smoothing(fluxList, 8))
 errorArray = np.array(errorList)
 #print (errorArray)
 
-thetaArray = np.array(sourceThetaList)
+angleArray = np.array(sourceAngleList)
 countsArray = fluxArray * intensity * t
 
 countsSum = np.sum(countsArray)

@@ -2,16 +2,58 @@ import numpy as np
 import matplotlib.pyplot as plt
 import csv
 import random as rd
+import os
+
+
+
+def smoothing(fluxArray, smoothingParameter, colVector):
+	smoothingArray = []
+	
+	for i in range(len(fluxArray)):
+		totSum = 0
+		numPnts = 0
+		if (i - smoothingParameter < 0):
+			for j in range(i,0,-1):
+				totSum += fluxArray[j]
+				numPnts += 1
+			for k in range(i,i+smoothingParameter,1):
+				totSum += fluxArray[k]
+				numPnts += 1
+		elif (i + smoothingParameter > len(fluxArray)):
+			for j in range(i,len(fluxArray),1):
+				totSum += fluxArray[j]
+				numPnts += 1
+			for k in range(i,i-smoothingParameter,-1):
+				totSum += fluxArray[k]
+				numPnts += 1
+		else:
+			for j in range(i,i+smoothingParameter,1):
+				totSum += fluxArray[j]
+				numPnts += 1
+			for k in range(i,i-smoothingParameter,-1):
+				totSum += fluxArray[k]
+				numPnts += 1
+		average = totSum/numPnts
+		smoothingArray.append(average)
+
+	smoothingArrayCol = [[0 for x in range(1)] for y in range(len(smoothingArray))]
+	for j in range(len(smoothingArray)):
+		smoothingArrayCol[j][0] = smoothingArray[j]
+	
+	if colVector:
+		return smoothingArrayCol
+	else:
+		return smoothingArray
 
 
 CONFIG_NAME = 'DDRS3_rand2_absorber1Source'
 tMatrixFilename = CONFIG_NAME + "tMatrix.csv"
 
-SOURCERUN_NAME = ".//Source2//" + CONFIG_NAME + "source2"
+SOURCERUN_NAME = ".//Source1/" + CONFIG_NAME + "source1"
 dataFilename = SOURCERUN_NAME + "data.csv"
 backgroundFilename = SOURCERUN_NAME + "background.csv"
 
-P=49   #Number of Pixels in Z-direction
+P=60   #Number of Pixels in Phi-direction
 N=120  # Number of Pixels in Theta-direction
 noOfPixels = P*N  #Total Number of Pixels for MLEM of entire surface plane
 #noOfPixels = P   #Total Number of Pixels for MLEM of z-position
@@ -22,7 +64,8 @@ transmissionMatrix=list(csv.reader(open(tMatrixFilename)))
 data = list(csv.reader(open(dataFilename)))   # signal curve of source location that we are trying to find
 background = list(csv.reader(open(backgroundFilename)))   # background (I have made this Error from MCNP?)
 
-
+#print (data)
+#data = smoothing(data.T,7).T
 ################################ This is an attempt at generating MLEM for strictly z-position ###########################
 ############### This should hopefully work because the generated Transmission Matrix should be handle the "constant theta" ###########
 
@@ -38,6 +81,14 @@ mle_n1 = np.array(mle_n1,dtype=np.float64)
 #mle_n = np.array([[1]*noOfPixels], dtype=np.float64).T
 #mle_n1 = np.array([[1]*noOfPixels],dtype=np.float64).T
 data = np.array(data, dtype=np.float64)
+data /= sum(data)[0]
+#print (data)
+#print (data/sum(data)[0])
+#print (sum(data))
+#data = np.array(smoothing(data.T[0],7,1))
+
+#print (data[:,0])
+#print (np.array(smoothing(data.T[0],7,1)).T)
 transmissionMatrix = np.array(transmissionMatrix, dtype=np.float64)
 background = np.array(background, dtype=np.float64).T
 oneDim = np.array([1]*P).T
@@ -56,12 +107,46 @@ for i in range(P):
 	signalCurve = transmissionMatrix[:,i]
 	for j in range(N):
 		colIndex = i*N+j
+		#hiftedSignalCurve = smoothing(np.roll(signalCurve,-j),7,0)
 		shiftedSignalCurve = np.roll(signalCurve,-j)
 		for k in range(len(shiftedSignalCurve)):
-			entireTransmissionMatrix[k][colIndex] = shiftedSignalCurve[k]
+			entireTransmissionMatrix[k][colIndex] = shiftedSignalCurve[k]/(sum(shiftedSignalCurve))
 ##########################################################
 
 entireTransmissionMatrix = np.array(entireTransmissionMatrix)
+
+existingTransmissionMatrix = False
+'''
+for i in range(N):
+	with open("smoothedTMatrix.csv","r") as file_input:
+			reader=csv.reader(file_input)
+			for row in reader:
+				if (not row[0]):
+					break
+				else:
+					existingTransmissionMatrix = True
+					break
+			file_input.seek(0)
+			with open("tempSmoothedTMatrix.csv","w") as file_output:
+				writer=csv.writer(file_output,lineterminator='\n')
+				if (existingTransmissionMatrix):
+					appendIndex = 0
+					for row in reader:
+						row.append(entireTransmissionMatrix[i][appendIndex])
+						writer.writerow(row)
+						appendIndex += 1
+				elif (existingTransmissionMatrix == False):
+					for index in entireTransmissionMatrix[:,0]:
+						writer.writerow([index])
+	os.remove("smoothedTMatrix.csv")
+	os.rename("tempSmoothedTMatrix.csv", "smoothedTMatrix.csv")
+'''
+'''
+with open("smoothedTMatrix.csv","w+", newline='') as file:
+	writer=csv.writer(file,delimiter=',')
+	for a in data[:,0]:
+		writer.writerow([a])
+'''
 
 onedData = data[:,0]
 #print (entireTransmissionMatrix.shape) 
@@ -147,65 +232,69 @@ while True:
 	#print (np.sqrt(euclidTotal))
 	euclidArray.append((np.sqrt(euclidTotal)))
 	if (n%1000==0):
+		#for ()
+		#plt.plot(mle_n)
+		#plt.show()
 		print (n, ': ',np.sqrt(euclidTotal))
-	if (np.sqrt(euclidTotal) < 1e-7):
+	if (np.sqrt(euclidTotal) < 1e-8):
 		print ("MLE has converged!\nIterations: ", n)
 		break
-	elif (n > 50000):
+	elif (n > 5000):
 		print ("MLE has not converged in 3000 iterations. Exiting.")
 		break
 	else:
 		mle_n = np.copy(mle_n1)
 
 
-
-with open(SOURCERUN_NAME + "Convergence.csv","w+", newline='') as file:
+'''
+with open(CONFIG_NAME + SOURCE_NAME + "Convergence.csv","w+", newline='') as file:
 	
 	writer=csv.writer(file,delimiter=',')
 	for a in euclidArray:
 		writer.writerow([a])
-		
+'''		
 ##### Plot MLE along z-axis
 ##### Should see a maximum at the z that corresponds to the source position 
 #z_val = [z for z in range(-100,101,5)]
 #plt.plot(z_val,mle_n1[:,0])
 #plt.show()
 
-zMax = 120
-zStep = 5
-noOfZSteps = P
-noOfAngleSteps = 120
+phiMax = 180
+phiStep = 3
+noOfPhiSteps = P
+noOfThetaSteps = 120
 num = 0
-angleArr = []
+thetaArr = []
 totalArr = []
 
 #print (mle_n1)
 
-for x in range(noOfZSteps):
-	angleArr = []
-	for y in range(noOfAngleSteps):
+for x in range(noOfPhiSteps):
+	thetaArr = []
+	for y in range(noOfThetaSteps):
 		#angleArr.append(mle_n1[num][0])
-		angleArr.append(mle_n1[num][0])
+		thetaArr.append(mle_n1[num][0])
 		num += 1
-	totalArr.append(angleArr)
-for z in range(noOfZSteps):
-	print ("Z: ", (5*z-110), " Intensity: ",np.max(totalArr[z]))
+	totalArr.append(thetaArr)
+for phi in range(noOfPhiSteps):
+	print ("Phi: ", (3*phi), " Intensity: ",np.max(totalArr[phi]))
 
 #print (np.array(totalArr[][])
 
 fig1, (ax1,ax2) = plt.subplots(1,2,constrained_layout=True,sharey=True)
 
-zContour = np.arange(-zMax,zMax+1,5)
+zContour = np.arange(0,180,3)
 thetaContour = np.arange(0,360,3)
 
 thetaCONT, zCONT = np.meshgrid(thetaContour,zContour)
 
 #levels = [1e-3,5e-3,1e-2,2e-2,3e-2]
+levels = [1e-3,1.125e-3,1.25e-3]
 cmap = plt.cm.get_cmap("hot")
 cmap.set_under("magenta")
 cmap.set_over("yellow")
-#CS = ax2.contour(thetaCONT,zCONT,totalArr,levels,cmap=cmap)
-CS = ax2.contour(thetaCONT,zCONT,totalArr,cmap=cmap)
+CS = ax2.contour(thetaCONT,zCONT,totalArr,levels,cmap=cmap)
+#CS = ax2.contour(thetaCONT,zCONT,totalArr,cmap=cmap)
 CS.cmap.set_under("gray")
 CS.cmap.set_over("yellow")
 #plt.clabel(CS, fmt='%1.2e', colors='black', fontsize=4)
@@ -213,11 +302,11 @@ fig1.colorbar(CS)
 #plt.contour(totalArr)
 
 #plt.imshow(totalArr, cmap=plt.cm.jet, origin='lower', extent=[0,6.28,-zMax,zMax], aspect='auto')
-ax1.imshow(totalArr, cmap=plt.cm.jet, origin='lower', extent=[0,360,-zMax,zMax], aspect='auto')
+ax1.imshow(totalArr, cmap=plt.cm.jet, origin='lower', extent=[0,360,0,180], aspect='auto')
 #plt.imshow(totalArr, cmap=plt.cm.jet, origin='lower')
 ax1.set_xlabel("Theta (degrees)")
 ax2.set_xlabel("Theta (degrees)")
-ax1.set_ylabel("Z (cm)")
+ax1.set_ylabel("Phi (degrees)")
 plt.show()
 
 

@@ -72,10 +72,11 @@ def smoothing(fluxArray, smoothingParameter):
 	return smoothingArray
 
 
-def createFiles(file_name, z_pos, r, init, final, step_size):
+def createFiles(file_name, phi, rad, init, final, step_size):
 	fileList = []
 	marker=0
-	for new_ang in range(init, final, step_size):
+	rad_phi = math.radians(phi)
+	for new_theta in range(init, final, step_size):
 
 		text_search = None
 		f =open(file_name)
@@ -87,21 +88,23 @@ def createFiles(file_name, z_pos, r, init, final, step_size):
 				break
 		f.close()
 		
-		rad_ang = math.radians(new_ang)
+		rad_theta = math.radians(new_theta)
 
-		x_pos = round(r * np.cos(rad_ang),2)
-		y_pos = round(r * np.sin(rad_ang),2)
+
+		x_pos = round(rad * np.cos(rad_theta)*np.sin(rad_phi),1)
+		y_pos = round(rad * np.sin(rad_theta)*np.sin(rad_phi),1)
+		z_pos = round(rad * np.cos(rad_phi),1)
 		r_mag = np.sqrt(x_pos**2+y_pos**2+z_pos**2)
-		vecx_pos = round(-x_pos/r_mag,2)
-		vecy_pos = round(-y_pos/r_mag,2)
-		vecz_pos = round(-z_pos/r_mag,2)
-		theta_rad = np.arctan(z_pos/r)
+		vecx_pos = round(-x_pos/r_mag,1)
+		vecy_pos = round(-y_pos/r_mag,1)
+		vecz_pos = round(-z_pos/r_mag,1)
+		#theta_rad = np.arctan(z_pos/r)
 		#vecz_pos = round(-1 * (theta_rad/(np.pi/2)),5)
 		#replacement_text = sdef + " ERG = 1.42 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " VEC= " + str(vecx_pos) + " " + str(vecy_pos) + " " + str(vecz_pos) + " DIR=d1 par=n" + "\n"
 		replacement_text = sdef + " ERG = 2.00 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " VEC= " + str(vecx_pos) + " " + str(vecy_pos) + " " + str(vecz_pos) + " DIR=d1 WGT 20 par=n" + "\n"
 		#replacement_text = sdef + " ERG = 1.42 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " par=n" + "\n"
 		read_name = file_name
-		write_name = CONFIG_NAME + "_" + str(new_ang) + ".txt"
+		write_name = CONFIG_NAME + "_" + str(new_theta) + ".txt"
 
 		f1 = open(read_name, 'r')
 		f2 = open(write_name, 'w')
@@ -177,8 +180,8 @@ def readFlux(_file_,energyBin):
 
 def initialize(_file_):
 	global intensity, activity, nps, t
-	global rho_,init_ang,final_ang,step
-	global zMax,zMin,zStep,initialZFlag,initialZ
+	global radius, init_theta, final_theta, step_theta
+	global init_phi, final_phi, step_phi
 	global packet
 
 
@@ -189,16 +192,13 @@ def initialize(_file_):
 		nps = float(file.readline()[6:])
 		t = float(file.readline()[4:])
 		file.readline()
-		rho_ = float(file.readline()[7:])
-		init_ang = int(file.readline()[11:])
-		final_ang = int(file.readline()[12:])
-		step = int(file.readline()[7:])
-		zMax = float(file.readline()[7:])
-		zMin = float(file.readline()[7:])
-		zStep = float(file.readline()[8:])
-		file.readline()
-		initialZFlag = bool(file.readline()[15:])
-		initialZ = float(file.readline()[11:])
+		radius = float(file.readline()[9:])
+		init_theta = int(file.readline()[13:])
+		final_theta = int(file.readline()[14:])
+		step_theta = int(file.readline()[13:])
+		init_phi = float(file.readline()[11:])
+		final_phi = float(file.readline()[12:])
+		step_phi = float(file.readline()[11:])
 		file.readline()
 		file.readline()
 		packet = int(file.readline()[9:])
@@ -224,42 +224,42 @@ if (not os.path.exists(dir_+t_file)):
 		pass
 
 intensity, activity, nps, t = 0,0,0,0
-rho_,init_ang,final_ang,step = 0,0,0,0
-zMax,zMin,zStep,initialZFlag,initialZ = 0,0,0,0,0
+radius,init_theta,final_theta,step_theta = 0,0,0,0
+init_phi,final_phi,step_phi = 0,0,0
 packet = 0
 
 
 initialize(init_file)
 
 
-originalZCountsArray = []
-originalZErrorArray = []
+originalPhiCountsArray = []
+originalPhiErrorArray = []
 transmissionMatrix = []
-deltaZTup = ()
-deltaZList = []
+deltaPhiTup = ()
+deltaPhiList = []
 
-z = initialZ
-while (z <= zMax):
+phi = init_phi
+while (phi <= final_phi):
 	start = time.time()
 	removeFiles(dir_, file_, keepInFile, keepOutFile, outFile_, init_file, t_file, temp_tfile, False, True) # purge directory of any existing MCNP files from previous run
-	files = createFiles(file_name_, z, rho_, init_ang, final_ang, step) # create all MCNP input files
+	files = createFiles(file_name_, phi, radius, init_theta, final_theta, step_theta) # create all MCNP input files
 
 	commands = []
 	outFileList = []
-	j = init_ang
+	j = init_theta
 	#create set of commands for subprocess of all input files
-	for i in range(int((final_ang - init_ang) / step)):
+	for i in range(int((final_theta - init_theta) / step_theta)):
 		binFile = "binRun" + str(j) + ".r"	
 		outFile = (CONFIG_NAME + "_out" + str(j) + ".txt")
 		commands.append("mcnp6 i=" + files[i] + " o=" +  outFile + " runtpe=" + binFile)
 		outFileList.append(outFile)
-		j += step
+		j += step_theta
 
 
 	print("Simulating...")
 
 	# give subprocess pak amount of parallel programs to execute until all commands are executed 
-	for x in tqdm(range(0,int((final_ang - init_ang) / step),(packet))):	
+	for x in tqdm(range(0,int((final_theta - init_theta) / step_theta),(packet))):	
 		if (x < (len(commands) - packet)):
 			commandsub = commands[x:(x+packet)]
 		else:
@@ -271,11 +271,11 @@ while (z <= zMax):
 			p.wait()
 
 	print ("Checkpoint")
-	ang = init_ang
+	theta = init_theta
 	
 	fluxList = []
 	errorList = []
-	sourceAngleList = []
+	sourceThetaList = []
 
 	#use for neutrons
 	#energyBinOfInterest = 13
@@ -288,9 +288,9 @@ while (z <= zMax):
 		flux, error = readFlux(f, energyBinOfInterest)
 		fluxList.append(flux)
 		errorList.append(error)
-		rad_ang = math.radians(ang)
-		sourceAngleList.append(rad_ang)
-		ang += step
+		rad_theta = math.radians(theta)
+		sourceThetaList.append(rad_theta)
+		theta += step_theta
 
 	removeFiles(dir_, file_, keepInFile, keepOutFile, outFile_, init_file, t_file, temp_tfile, True, False)
 	end = time.time()
@@ -302,7 +302,7 @@ while (z <= zMax):
 	fluxArray = np.array(smoothing(fluxList, 8))
 	errorArray = np.array(errorList)
 
-	angleArray = np.array(sourceAngleList)
+	angleArray = np.array(sourceThetaList)
 	countsArray = fluxArray * intensity * t
 
 	countsSum = np.sum(countsArray)
@@ -313,29 +313,29 @@ while (z <= zMax):
 	normalizedCountsErrorArray = np.multiply(normalizedCountsArray, normalizedCountsErr)
 	
 
-	print("InitialZ: " + str(initialZ) + " ZPrime: " + str(z))
+	print("Initial Phi: " + str(init_phi) + " Phi: " + str(phi))
 
-	if (z == initialZ):
-		originalZCountsArray = normalizedCountsArray
-		originalZErrorArray = normalizedCountsErrorArray
+	if (phi == init_phi):
+		originalPhiCountsArray = normalizedCountsArray
+		originalPhiErrorArray = normalizedCountsErrorArray
 		DeltaN = 0
 		DeltaNError = 0
 	else:
-		DeltaNArray = (normalizedCountsArray - originalZCountsArray)
+		DeltaNArray = (normalizedCountsArray - originalPhiCountsArray)
 		DeltaNArray2 = DeltaNArray**2
 		DeltaN = np.sqrt(np.sum(DeltaNArray2))
-		DeltaNStatArray = np.sqrt(normalizedCountsErrorArray**2+originalZErrorArray**2)
+		DeltaNStatArray = np.sqrt(normalizedCountsErrorArray**2+originalPhiErrorArray**2)
 		DeltaNError = DeltaN * np.sqrt(np.sum(np.multiply(DeltaNArray2,DeltaNStatArray**2)))/np.sum(DeltaNArray2)
 	
-	if ((DeltaN >= (DeltaNError-DeltaNError*0.05)) or z >= zMax):
-		deltaZ = z - initialZ
-		deltaZTup = (initialZ,deltaZ)
-		deltaZList.append(deltaZTup)
-		initialZ = z
-		originalZCountsArray = normalizedCountsArray
-		originalZErrorArray = normalizedCountsErrorArray
+	if ((DeltaN >= (DeltaNError-DeltaNError*0.05)) or phi >= final_phi):
+		deltaPhi = phi - init_phi
+		deltaPhiTup = (init_phi,deltaPhi)
+		deltaPhiList.append(deltaPhiTup)
+		init_phi = phi
+		originalPhiCountsArray = normalizedCountsArray
+		originalPhiErrorArray = normalizedCountsErrorArray
 
-	z += zStep
+	phi += step_phi
 
 	transmissionMatrix.append(list(normalizedCountsArray))
 	'''
@@ -376,13 +376,13 @@ while (z <= zMax):
 
 
 
-print("Delta Z List: ", deltaZList)
-deltaZScore = 0
-for j in range(len(deltaZList)):
+print("Delta Phi List: ", deltaPhiList)
+deltaPhiScore = 0
+for j in range(len(deltaPhiList)):
 	if j > 0:
-		deltaZScore += (deltaZList[j][1]**2)
+		deltaPhiScore += (deltaPhiList[j][1]**2)
 
-print ("Score: ", deltaZScore)
+print ("Score: ", deltaPhiScore)
 
 #with open(CONFIG_NAME + "tMatrix.csv","w+", newline='') as file:
 #	writer=csv.writer(file,delimiter=',')

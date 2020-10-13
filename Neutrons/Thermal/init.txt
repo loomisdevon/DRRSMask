@@ -4,16 +4,13 @@ activity = 37000000000
 nps = 10000000
 t = 5
 
-rho_ = 100
-init_ang = 0
-final_ang = 360
-step = 3
-zMax = 0
-zMin = -120
-zStep = 5
-# This is a boolean; Choose 1 or 0
-initialZFlag = 1
-initialZ = -120
+radius = 100
+init_theta = 0
+final_theta = 360
+step_theta = 3
+init_phi = 0
+final_phi = 180
+step_phi = 3
 
 # no of simultaneous commands sent to MCNP shell
 packet = 16
