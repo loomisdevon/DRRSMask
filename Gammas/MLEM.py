@@ -49,7 +49,7 @@ def smoothing(fluxArray, smoothingParameter, colVector):
 CONFIG_NAME = 'DDRS3_rand2_absorber1Source'
 tMatrixFilename = CONFIG_NAME + "tMatrix.csv"
 
-SOURCERUN_NAME = ".//Source1/" + CONFIG_NAME + "source1"
+SOURCERUN_NAME = ".//Source2/" + CONFIG_NAME + "source2"
 dataFilename = SOURCERUN_NAME + "data.csv"
 backgroundFilename = SOURCERUN_NAME + "background.csv"
 

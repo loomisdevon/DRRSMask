@@ -91,17 +91,17 @@ def createFiles(file_name, phi, rad, init, final, step_size):
 		rad_theta = math.radians(new_theta)
 
 
-		x_pos = round(rad * np.cos(rad_theta)*np.sin(rad_phi),1)
-		y_pos = round(rad * np.sin(rad_theta)*np.sin(rad_phi),1)
-		z_pos = round(rad * np.cos(rad_phi),1)
+		x_pos = round(rad * np.cos(rad_theta)*np.sin(rad_phi),3)
+		y_pos = round(rad * np.sin(rad_theta)*np.sin(rad_phi),3)
+		z_pos = round(rad * np.cos(rad_phi),3)
 		r_mag = np.sqrt(x_pos**2+y_pos**2+z_pos**2)
-		vecx_pos = round(-x_pos/r_mag,1)
-		vecy_pos = round(-y_pos/r_mag,1)
-		vecz_pos = round(-z_pos/r_mag,1)
+		vecx_pos = round(-x_pos/r_mag,3)
+		vecy_pos = round(-y_pos/r_mag,3)
+		vecz_pos = round(-z_pos/r_mag,3)
 		#theta_rad = np.arctan(z_pos/r)
 		#vecz_pos = round(-1 * (theta_rad/(np.pi/2)),5)
 		#replacement_text = sdef + " ERG = 1.42 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " VEC= " + str(vecx_pos) + " " + str(vecy_pos) + " " + str(vecz_pos) + " DIR=d1 par=n" + "\n"
-		replacement_text = sdef + " ERG = 2.00 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " VEC= " + str(vecx_pos) + " " + str(vecy_pos) + " " + str(vecz_pos) + " DIR=d1 WGT 20 par=n" + "\n"
+		replacement_text = sdef + " ERG = 2.0 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " VEC= " + str(vecx_pos) + " " + str(vecy_pos) + " " + str(vecz_pos) + " DIR=d1 WGT 20 par=n" + "\n"
 		#replacement_text = sdef + " ERG = 1.42 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " par=n" + "\n"
 		read_name = file_name
 		write_name = CONFIG_NAME + "_" + str(new_theta) + ".txt"
@@ -144,7 +144,7 @@ def removeFiles(directory, file1, file2, file3, outfile, initfile, t_file, temp_
 ####################### read MCNP output file, find and return flux value #########################
 #######################_file_: MCNP output file name ##################################
 
-def readFlux(_file_,energyBin):
+def readFlux(_file_,energyBin, binWrite):
 	flux_Arr = []
 	error_Arr = []
 	flux_ = 0
@@ -168,12 +168,16 @@ def readFlux(_file_,energyBin):
 	            #Error is in [2]
 				#tmp = 0.0
 				for j in range(energyBin+1):
-					flux_Arr.append(float(spectrum[j].split()[1]))
-					error_Arr.append(float(spectrum[j].split()[2]))
+					if (binWrite == j and binWrite != 0):
+						flux_ = float(spectrum[j].split()[1])
+						error_ = float(spectrum[j].split()[1])
+					#flux_Arr.append(float(spectrum[j].split()[1]))
+					#error_Arr.append(float(spectrum[j].split()[2]))
 					#flux_ += float(spectrum[j].split()[1])
 					#error_ += float(spectrum[j].split()[2])
-				flux_ = float(spectrum[energyBin].split()[1])
-				error_ = float(spectrum[energyBin].split()[2])
+				if (binWrite == 0):
+					flux_ = float(spectrum[energyBin].split()[1])
+					error_ = float(spectrum[energyBin].split()[2])
             #Fluxin3[i] = tmp
 
 	return flux_, error_
@@ -273,8 +277,8 @@ while (phi <= final_phi):
 	print ("Checkpoint")
 	theta = init_theta
 	
-	fluxList = []
-	errorList = []
+	fluxList, fluxList1, fluxList2, fluxList3, fluxList4, fluxList5, fluxList6, fluxList7, fluxList8 = [], [], [], [], [], [], [], [], []
+	errorList, errorList1, errorList2, errorList3, errorList4, errorList5, errorList6, errorList7, errorList8  = [], [], [], [], [], [], [], [], []
 	sourceThetaList = []
 
 	#use for neutrons
@@ -285,9 +289,33 @@ while (phi <= final_phi):
 
 	############################read and gather flux values and source distances for each output file and add them to lists###################################
 	for f in outFileList:
-		flux, error = readFlux(f, energyBinOfInterest)
+		flux, error = readFlux(f, energyBinOfInterest, 0)
+		#flux1, error1 = readFlux(f, energyBinOfInterest, 1)
+		#flux2, error2 = readFlux(f, energyBinOfInterest, 2)
+		#flux3, error3 = readFlux(f, energyBinOfInterest, 3)
+		#flux4, error4 = readFlux(f, energyBinOfInterest, 4)
+		#flux5, error5 = readFlux(f, energyBinOfInterest, 5)
+		#flux6, error6 = readFlux(f, energyBinOfInterest, 6)
+		#flux7, error7 = readFlux(f, energyBinOfInterest, 7)
+		#flux8, error8 = readFlux(f, energyBinOfInterest, 8)
 		fluxList.append(flux)
+		#fluxList1.append(flux1)
+		#fluxList2.append(flux2)
+		#fluxList3.append(flux3)
+		#fluxList4.append(flux4)
+		#fluxList5.append(flux5)
+		#fluxList6.append(flux6)
+		#fluxList7.append(flux7)
+		#fluxList8.append(flux8)
 		errorList.append(error)
+		#errorList1.append(error1)
+		#errorList2.append(error2)
+		#errorList3.append(error3)
+		#errorList4.append(error4)
+		#errorList5.append(error5)
+		#errorList6.append(error6)
+		#errorList7.append(error7)
+		#errorList8.append(error8)
 		rad_theta = math.radians(theta)
 		sourceThetaList.append(rad_theta)
 		theta += step_theta
@@ -298,12 +326,44 @@ while (phi <= final_phi):
 	
 	
 
-	rawFluxArray = np.array(fluxList)
+	#rawFluxArray = np.array(fluxList)
 	fluxArray = np.array(smoothing(fluxList, 8))
 	errorArray = np.array(errorList)
 
+	#fluxArray1 = np.array(smoothing(fluxList1, 8))
+	#errorArray1 = np.array(errorList1)
+
+	#fluxArray2 = np.array(smoothing(fluxList2, 8))
+	#errorArray2 = np.array(errorList2)
+
+	#fluxArray3 = np.array(smoothing(fluxList3, 8))
+	#errorArray3 = np.array(errorList3)
+
+	#fluxArray4 = np.array(smoothing(fluxList4, 8))
+	#errorArray4 = np.array(errorList4)
+
+	#fluxArray5 = np.array(smoothing(fluxList5, 8))
+	#errorArray5 = np.array(errorList5)
+
+	#fluxArray6 = np.array(smoothing(fluxList6, 8))
+	#errorArray6 = np.array(errorList6)
+
+	#fluxArray7 = np.array(smoothing(fluxList7, 8))
+	#errorArray7 = np.array(errorList7)
+
+	#fluxArray8 = np.array(smoothing(fluxList8, 8))
+	#errorArray8 = np.array(errorList8)
+
 	angleArray = np.array(sourceThetaList)
 	countsArray = fluxArray * intensity * t
+	#countsArray1 = fluxArray1 * intensity * t
+	#countsArray2 = fluxArray2 * intensity * t
+	#countsArray3 = fluxArray3 * intensity * t
+	#countsArray4 = fluxArray4 * intensity * t
+	#countsArray5 = fluxArray5 * intensity * t
+	#countsArray6 = fluxArray6 * intensity * t
+	#countsArray7 = fluxArray7 * intensity * t
+	#countsArray8 = fluxArray8 * intensity * t
 
 	countsSum = np.sum(countsArray)
 	#normalizedCountsArray = countsArray / countsSum
@@ -337,7 +397,15 @@ while (phi <= final_phi):
 
 	phi += step_phi
 
-	transmissionMatrix.append(list(normalizedCountsArray))
+	#transmissionMatrix.append(list(normalizedCountsArray))
+	#transmissionMatrix1.append(list(normalizedCountsArray))
+	#transmissionMatrix2.append(list(normalizedCountsArray))
+	#transmissionMatrix3.append(list(normalizedCountsArray))
+	#transmissionMatrix4.append(list(normalizedCountsArray))
+	#transmissionMatrix5.append(list(normalizedCountsArray))
+	#transmissionMatrix6.append(list(normalizedCountsArray))
+	#transmissionMatrix7.append(list(normalizedCountsArray))
+	#transmissionMatrix8.append(list(normalizedCountsArray))
 	'''
 	with open(dir_+t_file,"a", newline='') as file:
 		print ("The t matrix has been written!")
@@ -365,11 +433,20 @@ while (phi <= final_phi):
 				appendIndex = 0
 				for row in reader:
 					row.append(normalizedCountsArray[appendIndex])
+					#row.append(countsArray1[appendIndex])
+					#row.append(countsArray2[appendIndex])
+					#row.append(countsArray3[appendIndex])
+					#row.append(countsArray4[appendIndex])
+					#row.append(countsArray5[appendIndex])
+					#row.append(countsArray6[appendIndex])
+					#row.append(countsArray7[appendIndex])
+					#row.append(countsArray8[appendIndex])
 					writer.writerow(row)
 					appendIndex += 1
 			elif (existingTransmissionMatrix == False):
-				for index in normalizedCountsArray:
-					writer.writerow([index])
+				for index in range(len(normalizedCountsArray)):
+					writer.writerow([normalizedCountsArray[index]])
+					#writer.writerow([normalizedCountsArray[index],countsArray1[index],countsArray2[index],countsArray3[index],countsArray4[index],countsArray5[index],countsArray6[index],countsArray7[index],countsArray7[index]])
 	os.remove(t_file)
 	os.rename(temp_tfile, t_file)
 

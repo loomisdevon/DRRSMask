@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import csv
 import random as rd
 import os
+from tqdm import *
 
 
 
@@ -49,15 +50,15 @@ def smoothing(fluxArray, smoothingParameter, colVector):
 CONFIG_NAME = 'DDRS3_rand2_absorber1Source'
 tMatrixFilename = CONFIG_NAME + "tMatrix.csv"
 
-SOURCERUN_NAME = ".//Source1/" + CONFIG_NAME + "source1"
+SOURCERUN_NAME = ".//Source6/" + CONFIG_NAME + "source6"
 dataFilename = SOURCERUN_NAME + "data.csv"
 backgroundFilename = SOURCERUN_NAME + "background.csv"
 
-P=60   #Number of Pixels in Phi-direction
-N=120  # Number of Pixels in Theta-direction
+#P=60   #Number of Pixels in Phi-direction
+P=22 
+N=360  # Number of Pixels in Theta-direction
 noOfPixels = P*N  #Total Number of Pixels for MLEM of entire surface plane
 #noOfPixels = P   #Total Number of Pixels for MLEM of z-position
-
 
 # Read in all data from csv files saved in same directory as this source code 
 transmissionMatrix=list(csv.reader(open(tMatrixFilename)))
@@ -103,7 +104,7 @@ identity = np.array([[1 for x in range(1)] for y in range(N)]).T
 
 ###### Populate Entire Transmission Matrix ##############
 entireTransmissionMatrix = [[0 for x in range(N*P)] for y in range(N)]
-for i in range(P):
+for i in tqdm(range(P)):
 	signalCurve = transmissionMatrix[:,i]
 	for j in range(N):
 		colIndex = i*N+j
@@ -111,8 +112,9 @@ for i in range(P):
 		shiftedSignalCurve = np.roll(signalCurve,-j)
 		for k in range(len(shiftedSignalCurve)):
 			entireTransmissionMatrix[k][colIndex] = shiftedSignalCurve[k]/(sum(shiftedSignalCurve))
+			#entireTransmissionMatrix[k][colIndex] = shiftedSignalCurve[k]
 ##########################################################
-
+#print ("Here")
 entireTransmissionMatrix = np.array(entireTransmissionMatrix)
 
 existingTransmissionMatrix = False
@@ -236,10 +238,10 @@ while True:
 		#plt.plot(mle_n)
 		#plt.show()
 		print (n, ': ',np.sqrt(euclidTotal))
-	if (np.sqrt(euclidTotal) < 1e-8):
+	if (np.sqrt(euclidTotal) < 1e-6):
 		print ("MLE has converged!\nIterations: ", n)
 		break
-	elif (n > 5000):
+	elif (n > 25000):
 		print ("MLE has not converged in 3000 iterations. Exiting.")
 		break
 	else:
@@ -259,10 +261,11 @@ with open(CONFIG_NAME + SOURCE_NAME + "Convergence.csv","w+", newline='') as fil
 #plt.plot(z_val,mle_n1[:,0])
 #plt.show()
 
-phiMax = 180
+#phiMax = 180
+phiMax = 66
 phiStep = 3
 noOfPhiSteps = P
-noOfThetaSteps = 120
+noOfThetaSteps = 360
 num = 0
 thetaArr = []
 totalArr = []
@@ -283,8 +286,10 @@ for phi in range(noOfPhiSteps):
 
 fig1, (ax1,ax2) = plt.subplots(1,2,constrained_layout=True,sharey=True)
 
-zContour = np.arange(0,180,3)
-thetaContour = np.arange(0,360,3)
+#zContour = np.arange(0,180,3)
+#zContour = np.arange(24,138,3)
+zContour = np.arange(0,66,3)
+thetaContour = np.arange(0,360,1)
 
 thetaCONT, zCONT = np.meshgrid(thetaContour,zContour)
 
@@ -293,8 +298,8 @@ levels = [1e-3,1.125e-3,1.25e-3]
 cmap = plt.cm.get_cmap("hot")
 cmap.set_under("magenta")
 cmap.set_over("yellow")
-CS = ax2.contour(thetaCONT,zCONT,totalArr,levels,cmap=cmap)
-#CS = ax2.contour(thetaCONT,zCONT,totalArr,cmap=cmap)
+#CS = ax2.contour(thetaCONT,zCONT,totalArr,levels,cmap=cmap)
+CS = ax2.contour(thetaCONT,zCONT,totalArr,cmap=cmap)
 CS.cmap.set_under("gray")
 CS.cmap.set_over("yellow")
 #plt.clabel(CS, fmt='%1.2e', colors='black', fontsize=4)
@@ -302,7 +307,7 @@ fig1.colorbar(CS)
 #plt.contour(totalArr)
 
 #plt.imshow(totalArr, cmap=plt.cm.jet, origin='lower', extent=[0,6.28,-zMax,zMax], aspect='auto')
-ax1.imshow(totalArr, cmap=plt.cm.jet, origin='lower', extent=[0,360,0,180], aspect='auto')
+ax1.imshow(totalArr, cmap=plt.cm.jet, origin='lower', extent=[0,360,0,66], aspect='auto')
 #plt.imshow(totalArr, cmap=plt.cm.jet, origin='lower')
 ax1.set_xlabel("Theta (degrees)")
 ax2.set_xlabel("Theta (degrees)")

@@ -4,7 +4,6 @@
 # Authors: Ivan Novikov and Devon Loomis
 
 
-
 import os
 import os.path
 import math
@@ -30,7 +29,7 @@ tMATRIXCONFIG_NAME = 'DDRS3_rand2_absorber'
 tMatrixFilename = tMATRIXCONFIG_NAME + "tMatrix.csv"
 #####################
 # Source Info
-R = 10000
+R = 100
 Phi = 80
 Theta = 60
 ##############

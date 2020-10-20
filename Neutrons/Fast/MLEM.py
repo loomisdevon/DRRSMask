@@ -49,7 +49,7 @@ def smoothing(fluxArray, smoothingParameter, colVector):
 CONFIG_NAME = 'DDRS3_rand2_absorber1Source'
 tMatrixFilename = CONFIG_NAME + "tMatrix.csv"
 
-SOURCERUN_NAME = ".//Source1/" + CONFIG_NAME + "source1"
+SOURCERUN_NAME = ".//Source5/" + CONFIG_NAME + "source5"
 dataFilename = SOURCERUN_NAME + "data.csv"
 backgroundFilename = SOURCERUN_NAME + "background.csv"
 
@@ -107,10 +107,11 @@ for i in range(P):
 	signalCurve = transmissionMatrix[:,i]
 	for j in range(N):
 		colIndex = i*N+j
-		#hiftedSignalCurve = smoothing(np.roll(signalCurve,-j),7,0)
+		#shiftedSignalCurve = smoothing(np.roll(signalCurve,-j),7,0)
 		shiftedSignalCurve = np.roll(signalCurve,-j)
 		for k in range(len(shiftedSignalCurve)):
 			entireTransmissionMatrix[k][colIndex] = shiftedSignalCurve[k]/(sum(shiftedSignalCurve))
+			#entireTransmissionMatrix[k][colIndex] = shiftedSignalCurve[k]
 ##########################################################
 
 entireTransmissionMatrix = np.array(entireTransmissionMatrix)
@@ -293,8 +294,8 @@ levels = [1e-3,1.125e-3,1.25e-3]
 cmap = plt.cm.get_cmap("hot")
 cmap.set_under("magenta")
 cmap.set_over("yellow")
-CS = ax2.contour(thetaCONT,zCONT,totalArr,levels,cmap=cmap)
-#CS = ax2.contour(thetaCONT,zCONT,totalArr,cmap=cmap)
+#CS = ax2.contour(thetaCONT,zCONT,totalArr,levels,cmap=cmap)
+CS = ax2.contour(thetaCONT,zCONT,totalArr,cmap=cmap)
 CS.cmap.set_under("gray")
 CS.cmap.set_over("yellow")
 #plt.clabel(CS, fmt='%1.2e', colors='black', fontsize=4)

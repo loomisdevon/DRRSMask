@@ -25,14 +25,14 @@ from tqdm import *
 
 #Configuration Name (this is name of input file without .txt)
 CONFIG_NAME = 'DDRS3_rand2_absorber1Source'
-SOURCE_NAME = 'source1'
+SOURCE_NAME = 'source5'
 tMATRIXCONFIG_NAME = 'DDRS3_rand2_absorber'
 tMatrixFilename = tMATRIXCONFIG_NAME + "tMatrix.csv"
 #####################
 # Source Info
 R = 100
-Phi = 80
-Theta = 60
+Phi = 120
+Theta = 160
 ##############
 #################################
 
