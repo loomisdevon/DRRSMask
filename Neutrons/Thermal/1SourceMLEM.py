@@ -25,14 +25,14 @@ from tqdm import *
 
 #Configuration Name (this is name of input file without .txt)
 CONFIG_NAME = 'DDRS3_rand2_absorber1Source'
-SOURCE_NAME = 'source6'
+SOURCE_NAME = 'source2'
 tMATRIXCONFIG_NAME = 'DDRS3_rand2_absorber'
 tMatrixFilename = tMATRIXCONFIG_NAME + "tMatrix.csv"
 #####################
 # Source Info
 R = 100
-Phi = 36
-Theta = 45
+Phi = 90
+Theta = 180
 ##############
 #################################
 
@@ -206,6 +206,8 @@ def readFlux(_file_,energyBin, binWrite):
 					if (binWrite == j and binWrite != 0):
 						flux_ = float(spectrum[j].split()[1])
 						error_ = float(spectrum[j].split()[1])
+						#print (float(spectrum[j].split()[1]))
+
 					#flux_Arr.append(float(spectrum[j].split()[1]))
 					#error_Arr.append(float(spectrum[j].split()[2]))
 					#flux_ += float(spectrum[j].split()[1])
@@ -319,11 +321,12 @@ sourceThetaList = []
 #energyBinOfInterest = 13
 
 #use for gammas
-energyBinOfInterest = 14
+energyBinOfInterest = 100
 
 ############################read and gather flux values and source distances for each output file and add them to lists###################################
 for f in outFileList:
-	flux, error = readFlux(f, energyBinOfInterest, 0)
+	#flux, error = readFlux(f, energyBinOfInterest, 0)
+	flux, error = readFlux(f, energyBinOfInterest, 26)
 	flux1, error1 = readFlux(f, energyBinOfInterest, 1)
 	flux2, error2 = readFlux(f, energyBinOfInterest, 2)
 	flux3, error3 = readFlux(f, energyBinOfInterest, 3)

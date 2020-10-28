@@ -8,9 +8,9 @@ radius = 100
 init_theta = 0
 final_theta = 360
 step_theta = 1
-init_phi = 72
+init_phi = 36
 final_phi = 156
 step_phi = 3
 
 # no of simultaneous commands sent to MCNP shell
-packet = 16
+packet = 8

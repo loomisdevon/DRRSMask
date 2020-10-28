@@ -50,12 +50,17 @@ def smoothing(fluxArray, smoothingParameter, colVector):
 CONFIG_NAME = 'DDRS3_rand2_absorber1Source'
 tMatrixFilename = CONFIG_NAME + "tMatrix.csv"
 
-SOURCERUN_NAME = ".//Source6/" + CONFIG_NAME + "source6"
+SOURCERUN_NAME = ".//Source2/" + CONFIG_NAME + "source2"
 dataFilename = SOURCERUN_NAME + "data.csv"
 backgroundFilename = SOURCERUN_NAME + "background.csv"
 
+actualPhi = 90
+actualTheta = 180
+time = 30.
+normalizedTime = time/5.
+
 #P=60   #Number of Pixels in Phi-direction
-P=22 
+P=51 
 N=360  # Number of Pixels in Theta-direction
 noOfPixels = P*N  #Total Number of Pixels for MLEM of entire surface plane
 #noOfPixels = P   #Total Number of Pixels for MLEM of z-position
@@ -82,7 +87,37 @@ mle_n1 = np.array(mle_n1,dtype=np.float64)
 #mle_n = np.array([[1]*noOfPixels], dtype=np.float64).T
 #mle_n1 = np.array([[1]*noOfPixels],dtype=np.float64).T
 data = np.array(data, dtype=np.float64)
+
+intens = 1000000.0/1000000.0
+#Source Intensity
+data = np.multiply(data, intens)
+
+#CLYC gamma detection efficiency
+data = np.multiply(data, 0.05)
+
+#Multiply by irradiation time
+data = np.multiply(data, time)
+
+#Multiply by active area of detector
+data = np.multiply(data, 12)
+
+#Introduce Poisson Noise from Counts (This scales inversely with irradiation time)
+for inoise in range(len(data[:,0])):
+	data[inoise][0] = np.random.normal(data[inoise][0],np.sqrt(data[inoise][0]))
+
+#Round because detector counts is discrete
+data = np.round(data)
+
+#Normalize Signal Curve
 data /= sum(data)[0]
+
+
+
+#print(data[:,0])
+
+
+
+
 #print (data)
 #print (data/sum(data)[0])
 #print (sum(data))
@@ -91,6 +126,17 @@ data /= sum(data)[0]
 #print (data[:,0])
 #print (np.array(smoothing(data.T[0],7,1)).T)
 transmissionMatrix = np.array(transmissionMatrix, dtype=np.float64)
+
+#CLYC gamma detection efficiency
+transmissionMatrix = np.multiply(transmissionMatrix, 0.05)
+
+#Multiply by irradiation time
+transmissionMatrix = np.multiply(transmissionMatrix, time)
+
+#Discrete Detector Counts
+transmissionMatrix = np.round(transmissionMatrix)
+
+
 background = np.array(background, dtype=np.float64).T
 oneDim = np.array([1]*P).T
 
@@ -233,15 +279,15 @@ while True:
 	#if (condition==True):
 	#print (np.sqrt(euclidTotal))
 	euclidArray.append((np.sqrt(euclidTotal)))
-	if (n%1000==0):
+	if (n%100==0):
 		#for ()
 		#plt.plot(mle_n)
 		#plt.show()
 		print (n, ': ',np.sqrt(euclidTotal))
-	if (np.sqrt(euclidTotal) < 1e-6):
+	if (np.sqrt(euclidTotal) < 1e-8):
 		print ("MLE has converged!\nIterations: ", n)
 		break
-	elif (n > 25000):
+	elif (n > 250):
 		print ("MLE has not converged in 3000 iterations. Exiting.")
 		break
 	else:
@@ -262,56 +308,110 @@ with open(CONFIG_NAME + SOURCE_NAME + "Convergence.csv","w+", newline='') as fil
 #plt.show()
 
 #phiMax = 180
-phiMax = 66
+phiMax = 153
 phiStep = 3
 noOfPhiSteps = P
 noOfThetaSteps = 360
 num = 0
 thetaArr = []
 totalArr = []
-
+C = 0
 #print (mle_n1)
+max_phi_ind = 0
+max_theta_ind = 0
 
 for x in range(noOfPhiSteps):
 	thetaArr = []
 	for y in range(noOfThetaSteps):
 		#angleArr.append(mle_n1[num][0])
 		thetaArr.append(mle_n1[num][0])
+		C += mle_n1[num][0]
+		if (mle_n1[num][0] > C):
+			#C = mle_n1[num][0]
+			max_phi_ind = x
+			max_theta_ind = y
 		num += 1
+		
 	totalArr.append(thetaArr)
 for phi in range(noOfPhiSteps):
-	print ("Phi: ", (3*phi), " Intensity: ",np.max(totalArr[phi]))
+	print ("Phi: ", (3*phi), " Intensity: ", np.max(totalArr[phi]))
 
+
+
+print ("Max Phi:", max_phi_ind*3, " Max Theta: ", max_theta_ind)
+print ("C: ", C)
 #print (np.array(totalArr[][])
+num_rms = 0
+rms_phi = actualPhi - actualPhi % 3
+rms_sum = 0
+snr_num_sum = 0
+snr_den_sum = 0
+for phi_rms in range(P):
+	for theta_rms in range(N):
+		snr_num_sum += mle_n1[num_rms][0]*mle_n1[num_rms][0]
+		if (phi_rms*3 == rms_phi and theta_rms == actualTheta):
+			rms_sum += (mle_n1[num_rms][0] - C)*(mle_n1[num_rms][0] - C)
+			snr_den_sum += (mle_n1[num_rms][0] - C)*(mle_n1[num_rms][0] - C)
+		else:
+			rms_sum += mle_n1[num_rms][0]*mle_n1[num_rms][0]
+			snr_den_sum += mle_n1[num_rms][0]*mle_n1[num_rms][0]
+		num_rms += 1
 
-fig1, (ax1,ax2) = plt.subplots(1,2,constrained_layout=True,sharey=True)
+
+#snr = 10*np.log10(snr_num_sum/(snr_den_sum*N*P))
+#snr = 10*np.log10(snr_num_sum/(snr_den_sum/(N*P)))
+snr = 10*np.log10(snr_num_sum/(snr_den_sum/(N*P)))
+print ("SNR: ", snr)
+#fig1, (ax1,ax2) = plt.subplots(1,2,constrained_layout=True,sharey=True)
 
 #zContour = np.arange(0,180,3)
 #zContour = np.arange(24,138,3)
-zContour = np.arange(0,66,3)
+zContour = np.arange(0,153,3)
 thetaContour = np.arange(0,360,1)
 
 thetaCONT, zCONT = np.meshgrid(thetaContour,zContour)
 
+
+sigma = np.sqrt(rms_sum/(N*P))
+print (sigma)
+OneSigma = np.max(totalArr) - 1*sigma
+TwoSigma = np.max(totalArr) - 2*sigma
+ThreeSigma = np.max(totalArr) - 3*sigma
+print (OneSigma, " ", TwoSigma, " ", ThreeSigma)
+
 #levels = [1e-3,5e-3,1e-2,2e-2,3e-2]
-levels = [1e-3,1.125e-3,1.25e-3]
+#levels = [1e-3,1.125e-3,1.25e-3]
+levels = [ThreeSigma,TwoSigma,OneSigma,C]
 cmap = plt.cm.get_cmap("hot")
 cmap.set_under("magenta")
 cmap.set_over("yellow")
-#CS = ax2.contour(thetaCONT,zCONT,totalArr,levels,cmap=cmap)
-CS = ax2.contour(thetaCONT,zCONT,totalArr,cmap=cmap)
+'''
+CS = ax2.contour(thetaCONT,zCONT,totalArr,levels,cmap=cmap)
+#CS = ax2.contour(thetaCONT,zCONT,totalArr,cmap=cmap)
 CS.cmap.set_under("gray")
 CS.cmap.set_over("yellow")
 #plt.clabel(CS, fmt='%1.2e', colors='black', fontsize=4)
 fig1.colorbar(CS)
 #plt.contour(totalArr)
+'''
 
 #plt.imshow(totalArr, cmap=plt.cm.jet, origin='lower', extent=[0,6.28,-zMax,zMax], aspect='auto')
-ax1.imshow(totalArr, cmap=plt.cm.jet, origin='lower', extent=[0,360,0,66], aspect='auto')
+'''
+ax1.imshow(totalArr, cmap=plt.cm.jet, origin='lower', extent=[0,360,0,153], aspect='auto')
+ax1.plot(actualTheta,actualPhi,'kx',markersize=8)
+ax1.plot(actualTheta,actualPhi,'ko',markersize=8,markerfacecolor='none')
+'''
+
+plt.imshow(totalArr, cmap=plt.cm.jet, origin='lower', extent=[0,360,0,153], aspect='auto')
+plt.plot(actualTheta,actualPhi,'kx',markersize=8)
+plt.plot(actualTheta,actualPhi,'ko',markersize=8,markerfacecolor='none')
+#ax2.plot(actualTheta,actualPhi,'bx',markersize=2)
 #plt.imshow(totalArr, cmap=plt.cm.jet, origin='lower')
-ax1.set_xlabel("Theta (degrees)")
-ax2.set_xlabel("Theta (degrees)")
-ax1.set_ylabel("Phi (degrees)")
+#ax1.set_xlabel("Theta (degrees)")
+plt.xlabel("Theta (degrees)")
+#ax2.set_xlabel("Theta (degrees)")
+#ax1.set_ylabel("Phi (degrees)")
+plt.ylabel("Theta (degrees)")
 plt.show()
 
 

@@ -24,14 +24,14 @@ from tqdm import *
 
 #Configuration Name (this is name of input file without .txt)
 CONFIG_NAME = 'DDRS3_rand2_absorber1Source'
-SOURCE_NAME = 'source5'
+SOURCE_NAME = 'source1'
 tMATRIXCONFIG_NAME = 'DDRS3_rand2_absorber'
 tMatrixFilename = tMATRIXCONFIG_NAME + "tMatrix.csv"
 #####################
 # Source Info
 R = 100
-Phi = 80
-Theta = 60
+Phi = 60
+Theta = 260
 ##############
 #################################
 
@@ -178,7 +178,7 @@ def readFlux(_file_):
 
 	return flux_, error_
 '''
-def readFlux(_file_,energyBin):
+def readFlux(_file_,energyBin, binWrite):
 	flux_Arr = []
 	error_Arr = []
 	flux_ = 0
@@ -202,12 +202,20 @@ def readFlux(_file_,energyBin):
 	            #Error is in [2]
 				#tmp = 0.0
 				for j in range(energyBin+1):
-					flux_Arr.append(float(spectrum[j].split()[1]))
-					error_Arr.append(float(spectrum[j].split()[2]))
+					if (binWrite == j and binWrite != 0):
+						flux_ = float(spectrum[j].split()[1])
+						error_ = float(spectrum[j].split()[1])
+						print (float(spectrum[j].split()[1]))
+						print (float(spectrum[j-1].split()[1]))
+						print (float(spectrum[j+1].split()[1]))
+
+					#flux_Arr.append(float(spectrum[j].split()[1]))
+					#error_Arr.append(float(spectrum[j].split()[2]))
 					#flux_ += float(spectrum[j].split()[1])
 					#error_ += float(spectrum[j].split()[2])
-				flux_ = float(spectrum[energyBin].split()[1])
-				error_ = float(spectrum[energyBin].split()[2])
+				if (binWrite == 0):
+					flux_ = float(spectrum[energyBin].split()[1])
+					error_ = float(spectrum[energyBin].split()[2])
             #Fluxin3[i] = tmp
 
 	return flux_, error_
@@ -314,11 +322,11 @@ sourceThetaList = []
 #energyBinOfInterest = 13
 
 #use for gammas
-energyBinOfInterest = 14
+energyBinOfInterest = 50
 
 ############################read and gather flux values and source distances for each output file and add them to lists###################################
 for f in outFileList:
-	flux, error = readFlux(f, energyBinOfInterest)
+	flux, error = readFlux(f, energyBinOfInterest, 31)
 	fluxList.append(flux)
 	errorList.append(error)
 	rad_theta = math.radians(theta)

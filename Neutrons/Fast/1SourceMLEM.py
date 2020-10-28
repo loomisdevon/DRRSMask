@@ -25,14 +25,14 @@ from tqdm import *
 
 #Configuration Name (this is name of input file without .txt)
 CONFIG_NAME = 'DDRS3_rand2_absorber1Source'
-SOURCE_NAME = 'source5'
+SOURCE_NAME = 'source3'
 tMATRIXCONFIG_NAME = 'DDRS3_rand2_absorber'
 tMatrixFilename = tMATRIXCONFIG_NAME + "tMatrix.csv"
 #####################
 # Source Info
 R = 100
-Phi = 120
-Theta = 160
+Phi = 45
+Theta = 140
 ##############
 #################################
 
@@ -99,13 +99,13 @@ def createFiles(file_name, phi, rad, init, final, step_size):
 		rad_theta = math.radians(new_theta)
 
 
-		x_pos = round(rad * np.cos(rad_theta)*np.sin(rad_phi),1)
-		y_pos = round(rad * np.sin(rad_theta)*np.sin(rad_phi),1)
-		z_pos = round(rad * np.cos(rad_phi),1)
+		x_pos = round(rad * np.cos(rad_theta)*np.sin(rad_phi),3)
+		y_pos = round(rad * np.sin(rad_theta)*np.sin(rad_phi),3)
+		z_pos = round(rad * np.cos(rad_phi),3)
 		r_mag = np.sqrt(x_pos**2+y_pos**2+z_pos**2)
-		vecx_pos = round(-x_pos/r_mag,1)
-		vecy_pos = round(-y_pos/r_mag,1)
-		vecz_pos = round(-z_pos/r_mag,1)
+		vecx_pos = round(-x_pos/r_mag,3)
+		vecy_pos = round(-y_pos/r_mag,3)
+		vecz_pos = round(-z_pos/r_mag,3)
 		#theta_rad = np.arctan(z_pos/r)
 		#vecz_pos = round(-1 * (theta_rad/(np.pi/2)),5)
 		#replacement_text = sdef + " ERG = 1.42 POS " + str(x_pos) + " " + str(y_pos) + " " + str(z_pos) + " VEC= " + str(vecx_pos) + " " + str(vecy_pos) + " " + str(vecz_pos) + " DIR=d1 par=n" + "\n"
@@ -179,7 +179,7 @@ def readFlux(_file_):
 
 	return flux_, error_
 '''
-def readFlux(_file_,energyBin):
+def readFlux(_file_,energyBin, binWrite):
 	flux_Arr = []
 	error_Arr = []
 	flux_ = 0
@@ -203,12 +203,18 @@ def readFlux(_file_,energyBin):
 	            #Error is in [2]
 				#tmp = 0.0
 				for j in range(energyBin+1):
-					flux_Arr.append(float(spectrum[j].split()[1]))
-					error_Arr.append(float(spectrum[j].split()[2]))
+					if (binWrite == j and binWrite != 0):
+						flux_ = float(spectrum[j].split()[1])
+						error_ = float(spectrum[j].split()[1])
+						#print (float(spectrum[j].split()[1]))
+
+					#flux_Arr.append(float(spectrum[j].split()[1]))
+					#error_Arr.append(float(spectrum[j].split()[2]))
 					#flux_ += float(spectrum[j].split()[1])
 					#error_ += float(spectrum[j].split()[2])
-				flux_ = float(spectrum[energyBin].split()[1])
-				error_ = float(spectrum[energyBin].split()[2])
+				if (binWrite == 0):
+					flux_ = float(spectrum[energyBin].split()[1])
+					error_ = float(spectrum[energyBin].split()[2])
             #Fluxin3[i] = tmp
 
 	return flux_, error_
@@ -315,11 +321,11 @@ sourceThetaList = []
 #energyBinOfInterest = 13
 
 #use for gammas
-energyBinOfInterest = 14
+energyBinOfInterest = 100
 
 ############################read and gather flux values and source distances for each output file and add them to lists###################################
 for f in outFileList:
-	flux, error = readFlux(f, energyBinOfInterest)
+	flux, error = readFlux(f, energyBinOfInterest,40)
 	fluxList.append(flux)
 	errorList.append(error)
 	rad_theta = math.radians(theta)

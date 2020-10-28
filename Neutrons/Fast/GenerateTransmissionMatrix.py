@@ -127,11 +127,11 @@ def createFiles(file_name, phi, rad, init, final, step_size):
 															remove_all: test to determine whether to delete all files or only runtpe files
 '''
 
-def removeFiles(directory, file1, file2, file3, outfile, initfile, t_file, temp_tfile, save_one, remove_all):
+def removeFiles(directory, file1, file2, file3, outfile, initfile, t_file, temp_tfile, save_one, remove_all, remove_bins):
 	dir_name = directory
 	for fname in os.listdir(dir_name):
 		if (fname != initfile and fname != t_file and fname != temp_tfile):
-			if fname.startswith("binRun"):
+			if fname.startswith("binRun") and remove_bins:
 				os.remove(os.path.join(dir_name, fname))
 			if (fname.startswith(file1[:-4]) or fname.startswith(outfile[:-4])) and remove_all:
 				if (fname != file1):
@@ -171,6 +171,8 @@ def readFlux(_file_,energyBin, binWrite):
 					if (binWrite == j and binWrite != 0):
 						flux_ = float(spectrum[j].split()[1])
 						error_ = float(spectrum[j].split()[1])
+						#print (float(spectrum[j].split()[1]))
+
 					#flux_Arr.append(float(spectrum[j].split()[1]))
 					#error_Arr.append(float(spectrum[j].split()[2]))
 					#flux_ += float(spectrum[j].split()[1])
@@ -245,7 +247,7 @@ deltaPhiList = []
 phi = init_phi
 while (phi <= final_phi):
 	start = time.time()
-	removeFiles(dir_, file_, keepInFile, keepOutFile, outFile_, init_file, t_file, temp_tfile, False, True) # purge directory of any existing MCNP files from previous run
+	removeFiles(dir_, file_, keepInFile, keepOutFile, outFile_, init_file, t_file, temp_tfile, False, True, True) # purge directory of any existing MCNP files from previous run
 	files = createFiles(file_name_, phi, radius, init_theta, final_theta, step_theta) # create all MCNP input files
 
 	commands = []
@@ -269,7 +271,7 @@ while (phi <= final_phi):
 		else:
 			commandsub = commands[x:]
 		processes = [subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, cwd=dir_) for cmd in commandsub]
-		removeFiles(dir_, file_, keepInFile, keepOutFile, outFile_, init_file, t_file, temp_tfile, False, False) # remove runtpe files
+		removeFiles(dir_, file_, keepInFile, keepOutFile, outFile_, init_file, t_file, temp_tfile, False, False, False) # remove runtpe files
 
 		for p in processes:
 			p.wait()
@@ -285,11 +287,11 @@ while (phi <= final_phi):
 	#energyBinOfInterest = 13
 
 	#use for gammas
-	energyBinOfInterest = 14
+	energyBinOfInterest = 100
 
 	############################read and gather flux values and source distances for each output file and add them to lists###################################
 	for f in outFileList:
-		flux, error = readFlux(f, energyBinOfInterest, 0)
+		flux, error = readFlux(f, energyBinOfInterest, 40)
 		#flux1, error1 = readFlux(f, energyBinOfInterest, 1)
 		#flux2, error2 = readFlux(f, energyBinOfInterest, 2)
 		#flux3, error3 = readFlux(f, energyBinOfInterest, 3)
@@ -320,7 +322,7 @@ while (phi <= final_phi):
 		sourceThetaList.append(rad_theta)
 		theta += step_theta
 
-	removeFiles(dir_, file_, keepInFile, keepOutFile, outFile_, init_file, t_file, temp_tfile, True, False)
+	removeFiles(dir_, file_, keepInFile, keepOutFile, outFile_, init_file, t_file, temp_tfile, True, False, True)
 	end = time.time()
 	print("Runtime: ", round((end - start)/60, 2), " mins")
 	

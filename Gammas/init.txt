@@ -8,7 +8,7 @@ radius = 100
 init_theta = 0
 final_theta = 360
 step_theta = 1
-init_phi = 6
+init_phi = 84
 final_phi = 154
 step_phi = 3
 
